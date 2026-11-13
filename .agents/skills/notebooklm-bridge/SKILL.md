@@ -6,6 +6,12 @@ description: Sincroniza documentos, repositórios, notas e fontes de pesquisa en
 
 Esta skill conecta o **Antigravity** ao **Google NotebookLM** usando pastas dedicadas no Google Drive do usuário e conversão nativa para Google Docs (`gdocs` + `gdrive`).
 
+## Script Global (Disponível em Todas as Conversas)
+
+O script e o manifesto já estão instalados globalmente em `/home/antigravity/.gemini/skills/notebooklm-bridge/`:
+- Script: `/home/antigravity/.gemini/skills/notebooklm-bridge/notebooklm_bridge.py`
+- Manifesto: `/home/antigravity/.gemini/skills/notebooklm-bridge/notebooklm_manifest.json`
+
 ## Estrutura Configurada no Google Drive
 
 - **Pasta Principal (`Antigravity + NotebookLM`)**:
@@ -17,53 +23,26 @@ Esta skill conecta o **Antigravity** ao **Google NotebookLM** usando pastas dedi
 - **Notas exportadas do NotebookLM para o Antigravity (`02_Exportados_do_NotebookLM`)**:
   - ID: `1qt-hBrfeUZKJq_ZzcU89TJUvt3RIR9XN`
   - URL: `https://drive.google.com/drive/folders/1qt-hBrfeUZKJq_ZzcU89TJUvt3RIR9XN`
-- **Documento Hub Inicial (`Hub de Conhecimento — Antigravity & NotebookLM`)**:
-  - ID: `1V_Vt_dCFflP9jljx2dO7Ky5-oV47lhWEtYgN4-EW9ZQ`
-  - URL: `https://docs.google.com/document/d/1V_Vt_dCFflP9jljx2dO7Ky5-oV47lhWEtYgN4-EW9ZQ/edit`
 
-## Fluxos de Trabalho
-
-> **Nota:** Se o repositório `/home/antigravity/Zacydev/Antigravity-e-NotebookLM` estiver montado na conversa, use o script `scripts/notebooklm_bridge.py`. Caso esteja em **outra conversa/projeto** sem esse repositório montado, use os comandos diretos do `gdrive` e `gdocs` abaixo.
+## Comandos Prontos (Qualquer Conversa)
 
 ### 1. Verificar o status das pastas do NotebookLM
-- **Com o repositório montado:**
-  ```bash
-  python3 /home/antigravity/Zacydev/Antigravity-e-NotebookLM/scripts/notebooklm_bridge.py status
-  ```
-- **Em qualquer outra conversa (direto via `gdrive`):**
-  ```bash
-  gdrive readonly ls 1nJFhBGmuqzkFrN-_wFrfoG6dHdsjZQAW
-  gdrive readonly ls 1qt-hBrfeUZKJq_ZzcU89TJUvt3RIR9XN
-  ```
+```bash
+python3 /home/antigravity/.gemini/skills/notebooklm-bridge/notebooklm_bridge.py status
+```
 
-### 2. Enviar ou atualizar um documento para o NotebookLM (Antigravity → NotebookLM)
-- **Com o repositório montado:**
-  ```bash
-  python3 /home/antigravity/Zacydev/Antigravity-e-NotebookLM/scripts/notebooklm_bridge.py push <caminho_do_arquivo.md> --title "Título da Fonte"
-  ```
-- **Em qualquer outra conversa (direto via `gdocs` + `gdrive`):**
-  1. Para criar uma nova fonte em `01_Fontes_para_NotebookLM`:
-     ```bash
-     gdocs mutate import-md <arquivo.md> --title "Título da Fonte" --auto-fit-tables
-     gdrive mutate mv <DOC_ID_CRIADO> 1nJFhBGmuqzkFrN-_wFrfoG6dHdsjZQAW
-     ```
-  2. Para atualizar uma fonte existente mantendo o mesmo link no NotebookLM:
-     ```bash
-     gdocs mutate import-md <arquivo.md> --update <DOC_ID_EXISTENTE> --auto-fit-tables
-     ```
+### 2. Enviar ou atualizar um documento Markdown para o NotebookLM (Antigravity → NotebookLM)
+```bash
+python3 /home/antigravity/.gemini/skills/notebooklm-bridge/notebooklm_bridge.py push <caminho_do_arquivo.md> --title "Título da Fonte"
+```
+*(Funciona tanto com `gdocs` quanto apenas com `gdrive` conectado).*
 
 ### 3. Empacotar um Repositório Inteiro como Fonte do NotebookLM
-- **Com o repositório montado:**
-  ```bash
-  python3 /home/antigravity/Zacydev/Antigravity-e-NotebookLM/scripts/notebooklm_bridge.py bundle-repo --dir <diretorio_do_repo> --title "Fonte NotebookLM — Nome do Projeto"
-  ```
+```bash
+python3 /home/antigravity/.gemini/skills/notebooklm-bridge/notebooklm_bridge.py bundle-repo --dir <diretorio_do_repo> --title "Fonte NotebookLM — Nome do Projeto"
+```
 
 ### 4. Ler Notas Exportadas do NotebookLM (NotebookLM → Antigravity)
-1. Liste os arquivos da pasta `1qt-hBrfeUZKJq_ZzcU89TJUvt3RIR9XN`:
-   ```bash
-   gdrive readonly ls 1qt-hBrfeUZKJq_ZzcU89TJUvt3RIR9XN
-   ```
-2. Leia o conteúdo diretamente com:
-   ```bash
-   gdocs readonly read <DOC_ID>
-   ```
+```bash
+python3 /home/antigravity/.gemini/skills/notebooklm-bridge/notebooklm_bridge.py pull "<nome_ou_id_do_doc>"
+```

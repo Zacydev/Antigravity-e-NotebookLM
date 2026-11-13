@@ -2,11 +2,7 @@
 """
 Ponte de Automação Antigravity <-> Google Drive / Docs <-> NotebookLM.
 
-Comandos:
-  status                         Lista os documentos nas pastas de Fontes e Exportados no Drive
-  push <arquivo.md> [--title T]  Envia ou atualiza um arquivo Markdown como Google Doc na pasta 01_Fontes_para_NotebookLM
-  pull <id_ou_nome> [--out ARQ]  Exporta um Google Doc da pasta 02_Exportados_do_NotebookLM para Markdown local
-  bundle-repo [--dir DIR]        Empacota a estrutura e arquivos principais de um repositório e envia como Google Doc para o NotebookLM
+Funciona tanto no repositório quanto globalmente em /home/antigravity/.gemini/skills/notebooklm-bridge/notebooklm_bridge.py
 """
 
 import argparse
@@ -14,11 +10,15 @@ import json
 import os
 import re
 import subprocess
-import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-MANIFEST_PATH = REPO_ROOT / "notebooklm_manifest.json"
+SCRIPT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPT_DIR.parent if SCRIPT_DIR.name == "scripts" else SCRIPT_DIR
+
+if (SCRIPT_DIR / "notebooklm_manifest.json").exists():
+    MANIFEST_PATH = SCRIPT_DIR / "notebooklm_manifest.json"
+else:
+    MANIFEST_PATH = REPO_ROOT / "notebooklm_manifest.json"
 
 EXCLUDED_DIRS = {
     ".git",
@@ -49,18 +49,42 @@ TEXT_EXTENSIONS = {
 }
 
 
-def run_cmd(cmd: list[str]) -> str:
+def run_cmd(cmd: list[str], check: bool = True) -> subprocess.CompletedProcess:
     result = subprocess.run(cmd, capture_output=True, text=True)
-    if result.returncode != 0:
+    if check and result.returncode != 0:
         raise RuntimeError(
             f"Erro ao executar {' '.join(cmd)}:\n{result.stderr or result.stdout}"
         )
-    return result.stdout.strip()
+    return result
+
+
+def has_gdocs_auth() -> bool:
+    res = run_cmd(["gdocs", "auth", "status"], check=False)
+    return res.returncode == 0 and "Logged in" in res.stdout
 
 
 def load_manifest() -> dict:
     if not MANIFEST_PATH.exists():
-        raise FileNotFoundError(f"Manifesto não encontrado em {MANIFEST_PATH}")
+        return {
+            "drive_folders": {
+                "root": {
+                    "name": "Antigravity + NotebookLM",
+                    "id": "1Ci8ZfsexsMavNEvuZkWVnKXauhMeOBVM",
+                    "url": "https://drive.google.com/drive/folders/1Ci8ZfsexsMavNEvuZkWVnKXauhMeOBVM",
+                },
+                "sources_for_notebooklm": {
+                    "name": "01_Fontes_para_NotebookLM",
+                    "id": "1nJFhBGmuqzkFrN-_wFrfoG6dHdsjZQAW",
+                    "url": "https://drive.google.com/drive/folders/1nJFhBGmuqzkFrN-_wFrfoG6dHdsjZQAW",
+                },
+                "exports_from_notebooklm": {
+                    "name": "02_Exportados_do_NotebookLM",
+                    "id": "1qt-hBrfeUZKJq_ZzcU89TJUvt3RIR9XN",
+                    "url": "https://drive.google.com/drive/folders/1qt-hBrfeUZKJq_ZzcU89TJUvt3RIR9XN",
+                },
+            },
+            "synced_documents": {},
+        }
     return json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
 
 
@@ -71,7 +95,7 @@ def save_manifest(data: dict) -> None:
 
 
 def list_drive_folder(folder_id: str) -> list[dict]:
-    out = run_cmd(["gdrive", "readonly", "ls", folder_id, "--json"])
+    out = run_cmd(["gdrive", "readonly", "ls", folder_id, "--json"]).stdout.strip()
     if not out:
         return []
     return json.loads(out)
@@ -122,24 +146,28 @@ def push_markdown_to_drive(
     sources_folder_id = manifest["drive_folders"]["sources_for_notebooklm"]["id"]
     synced = manifest.setdefault("synced_documents", {})
 
-    key = manifest_key or str(md_path.resolve().relative_to(REPO_ROOT)) if md_path.resolve().is_relative_to(REPO_ROOT) else md_path.stem
+    key = manifest_key or md_path.stem
     doc_title = title or md_path.stem.replace("_", " ").replace("-", " ").title()
+    use_gdocs = has_gdocs_auth()
 
     existing = synced.get(key)
     if existing and existing.get("doc_id"):
         doc_id = existing["doc_id"]
-        print(f"🔄 Atualizando Google Doc existente: '{existing['title']}'...")
-        run_cmd(
-            [
-                "gdocs",
-                "mutate",
-                "import-md",
-                str(md_path),
-                "--update",
-                doc_id,
-                "--auto-fit-tables",
-            ]
-        )
+        print(f"🔄 Atualizando fonte existente: '{existing['title']}'...")
+        if use_gdocs:
+            run_cmd(
+                [
+                    "gdocs",
+                    "mutate",
+                    "import-md",
+                    str(md_path),
+                    "--update",
+                    doc_id,
+                    "--auto-fit-tables",
+                ]
+            )
+        else:
+            run_cmd(["gdrive", "mutate", "update", doc_id, str(md_path)])
         if title and title != existing.get("title"):
             run_cmd(["gdrive", "mutate", "rename", doc_id, doc_title])
             existing["title"] = doc_title
@@ -147,29 +175,40 @@ def push_markdown_to_drive(
         print(f"✅ Atualizado com sucesso! Link: {existing['url']}")
         return existing
 
-    print(f"🚀 Criando novo Google Doc '{doc_title}' em 01_Fontes_para_NotebookLM...")
-    out = run_cmd(
-        [
-            "gdocs",
-            "mutate",
-            "import-md",
-            str(md_path),
-            "--title",
-            doc_title,
-            "--auto-fit-tables",
-        ]
-    )
-    match = re.search(r"ID:\s*([a-zA-Z0-9_-]+)", out)
-    if not match:
-        link_match = re.search(r"/document/d/([a-zA-Z0-9_-]+)", out)
-        if not link_match:
+    print(f"🚀 Publicando '{doc_title}' em 01_Fontes_para_NotebookLM...")
+    if use_gdocs:
+        out = run_cmd(
+            [
+                "gdocs",
+                "mutate",
+                "import-md",
+                str(md_path),
+                "--title",
+                doc_title,
+                "--auto-fit-tables",
+            ]
+        ).stdout.strip()
+        match = re.search(r"ID:\s*([a-zA-Z0-9_-]+)", out) or re.search(
+            r"/document/d/([a-zA-Z0-9_-]+)", out
+        )
+        if not match:
             raise RuntimeError(f"Não foi possível extrair o ID do documento de:\n{out}")
-        doc_id = link_match.group(1)
-    else:
         doc_id = match.group(1)
-
-    run_cmd(["gdrive", "mutate", "mv", doc_id, sources_folder_id])
-    doc_url = f"https://docs.google.com/document/d/{doc_id}/edit"
+        run_cmd(["gdrive", "mutate", "mv", doc_id, sources_folder_id])
+        doc_url = f"https://docs.google.com/document/d/{doc_id}/edit"
+    else:
+        out = run_cmd(
+            ["gdrive", "mutate", "upload", str(md_path), "--parent", sources_folder_id]
+        ).stdout.strip()
+        match = re.search(r"ID:\s*([a-zA-Z0-9_-]+)", out) or re.search(
+            r"([a-zA-Z0-9_-]{25,})", out
+        )
+        if not match:
+            raise RuntimeError(f"Não foi possível extrair o ID do arquivo de:\n{out}")
+        doc_id = match.group(1)
+        if title:
+            run_cmd(["gdrive", "mutate", "rename", doc_id, f"{doc_title}.md"])
+        doc_url = f"https://drive.google.com/file/d/{doc_id}/view"
 
     entry = {
         "title": doc_title,
@@ -180,7 +219,7 @@ def push_markdown_to_drive(
     }
     synced[key] = entry
     save_manifest(manifest)
-    print(f"✅ Criado e movido para 01_Fontes_para_NotebookLM!")
+    print(f"✅ Publicado em 01_Fontes_para_NotebookLM!")
     print(f"🔗 Link: {doc_url}")
     return entry
 
@@ -214,25 +253,14 @@ def cmd_pull(args: argparse.Namespace) -> None:
             f"Nenhum documento encontrado com nome ou ID '{target}' nas pastas do NotebookLM."
         )
 
-    notes_dir = REPO_ROOT / "notes"
+    notes_dir = Path.cwd() / "notes"
     notes_dir.mkdir(parents=True, exist_ok=True)
     safe_name = re.sub(r"[^a-zA-Z0-9_-]+", "_", doc_name.lower()).strip("_")
     out_path = Path(args.out).resolve() if args.out else (notes_dir / f"{safe_name}.md")
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     print(f"📥 Exportando '{doc_name}' para {out_path}...")
-    run_cmd(
-        [
-            "gdocs",
-            "readonly",
-            "export",
-            doc_id,
-            "--format",
-            "md",
-            "--output",
-            str(out_path),
-        ]
-    )
+    run_cmd(["gdrive", "readonly", "export", doc_id, str(out_path), "--format", "md"])
     print(f"✅ Arquivo salvo em: {out_path}")
 
 
@@ -303,10 +331,10 @@ def main() -> None:
     sub.add_parser("status", help="Lista os arquivos nas pastas do NotebookLM no Drive")
 
     p_push = sub.add_parser(
-        "push", help="Envia ou atualiza um arquivo Markdown como Google Doc para o NotebookLM"
+        "push", help="Envia ou atualiza um arquivo Markdown para o NotebookLM"
     )
     p_push.add_argument("file", help="Caminho do arquivo Markdown local")
-    p_push.add_argument("--title", help="Título do Google Doc no Drive")
+    p_push.add_argument("--title", help="Título do documento no Drive")
     p_push.add_argument("--key", help="Chave personalizada no manifesto")
 
     p_pull = sub.add_parser(
@@ -317,10 +345,10 @@ def main() -> None:
 
     p_bundle = sub.add_parser(
         "bundle-repo",
-        help="Empacota o repositório em um Google Doc pronto para o NotebookLM",
+        help="Empacota o repositório em um documento pronto para o NotebookLM",
     )
-    p_bundle.add_argument("--dir", default=str(REPO_ROOT), help="Diretório do repositório")
-    p_bundle.add_argument("--title", help="Título do Google Doc gerado")
+    p_bundle.add_argument("--dir", default=str(Path.cwd()), help="Diretório do repositório")
+    p_bundle.add_argument("--title", help="Título do documento gerado")
 
     args = parser.parse_args()
     if args.command == "status":
