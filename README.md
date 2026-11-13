@@ -28,11 +28,23 @@ Integração direta e automatizada entre o **Google Antigravity** e o **Google N
 
 ## 🚀 Como Usar em Qualquer Conversa do Antigravity
 
-Em qualquer **nova conversa** do Antigravity, basta pedir em linguagem natural:
+### 1. Em Conversas Novas (Linguagem Natural)
+Em qualquer **nova conversa** do Antigravity, a `nlm-skill` já vem carregada automaticamente. No final da conversa, você pode escolher entre:
 
-- *"Sincronize esta conversa e a documentação de código do projeto com o meu Segundo Cérebro no NotebookLM."*
-- *"Gere uma documentação de aprendizado no meu NotebookLM sobre o que construímos hoje."*
-- *"Crie um podcast (Audio Overview) ou um quiz no meu Segundo Cérebro do NotebookLM sobre a arquitetura deste projeto."*
+- **Alimentar o Caderno Central (`🧠 Segundo Cérebro`)**:
+  > *"Sincronize esta conversa, a documentação de código do projeto e o aprendizado com o meu Segundo Cérebro no NotebookLM."*
+- **Criar um Notebook NOVO exclusivo para aquele chat/projeto**:
+  > *"Crie um novo notebook no NotebookLM com tudo que falamos neste chat, a documentação do código e um guia de aprendizado."*
+- **Gerar materiais de estudo (Podcast, Quiz, Flashcards, Mapa Mental)**:
+  > *"Crie um podcast (Audio Overview) ou um quiz no meu Segundo Cérebro do NotebookLM sobre a arquitetura deste projeto."*
+
+### 2. Em Conversas Antigas (Abertas antes da criação da Skill)
+Conversas antigas não têm a `nlm-skill` na lista inicial de skills do prompt, mas **compartilham a mesma pasta `/home/antigravity/.gemini/nlm/`**. Para usar em uma conversa antiga, basta colar no chat antigo:
+
+- **Para enviar a conversa antiga ao Segundo Cérebro:**
+  > *"Salve um resumo completo de tudo que conversamos e decidimos neste chat em `/tmp/resumo.md` e execute no terminal: `python3 /home/antigravity/.gemini/nlm/brain_sync.py sync-chat --title 'Tema desta conversa' --file /tmp/resumo.md`"*
+- **Para criar um Notebook NOVO a partir da conversa antiga:**
+  > *"Salve o resumo desta conversa em `/tmp/resumo.md`, um guia de aprendizado em `/tmp/aprendizado.md` e execute no terminal: `python3 /home/antigravity/.gemini/nlm/brain_sync.py create-notebook --title 'Nome do Projeto' --chat-file /tmp/resumo.md --learning-file /tmp/aprendizado.md`"*
 
 ### Comandos Diretos da Automação (`brain_sync.py`)
 
@@ -40,7 +52,7 @@ Em qualquer **nova conversa** do Antigravity, basta pedir em linguagem natural:
 # 1. Verificar o status e listar todas as fontes do Segundo Cérebro
 python3 /home/antigravity/.gemini/nlm/brain_sync.py status
 
-# 2. Sincronizar o resumo/decisões de um chat
+# 2. Sincronizar o resumo/decisões de um chat no Segundo Cérebro
 python3 /home/antigravity/.gemini/nlm/brain_sync.py sync-chat \
   --title "Nome da Feature ou Sessão" \
   --file /tmp/resumo_chat.md
@@ -54,6 +66,13 @@ python3 /home/antigravity/.gemini/nlm/brain_sync.py sync-code \
 python3 /home/antigravity/.gemini/nlm/brain_sync.py sync-learning \
   --topic "Tema de Estudo" \
   --file /tmp/guia_aprendizado.md
+
+# 5. Criar um caderno NOVO exclusivo no final da conversa (com chat + código + aprendizado)
+python3 /home/antigravity/.gemini/nlm/brain_sync.py create-notebook \
+  --title "Nome do Novo Caderno" \
+  --chat-file /tmp/resumo_chat.md \
+  --code-dir /caminho/do/projeto \
+  --learning-file /tmp/guia_aprendizado.md
 ```
 
 ---
