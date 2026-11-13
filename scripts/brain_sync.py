@@ -1,0 +1,304 @@
+#!/usr/bin/env python3
+"""
+Motor de Automação do "Segundo Cérebro de Engenharia & Aprendizado" (Antigravity -> NotebookLM).
+
+Caderno Central (Alias: `cerebro`):
+  ID: 4e930edb-9f8d-4a41-9987-52a3d1291720
+  URL: https://notebook.google.com/notebook/4e930edb-9f8d-4a41-9987-52a3d1291720
+
+Comandos:
+  sync-chat --title T (--file F | --text TXT)  Sincroniza o resumo estruturado e histórico da conversa no Segundo Cérebro
+  sync-code [--dir DIR] [--project NOME]       Gera a documentação técnica + mapa de funções/classes + código de um projeto e envia para o Segundo Cérebro
+  save-doc --title T (--file F | --text TXT)   Salva/atualiza uma documentação de aprendizado ou arquitetura diretamente no Segundo Cérebro
+  status                                       Lista todas as fontes indexadas no seu Segundo Cérebro no NotebookLM
+"""
+
+import argparse
+import ast
+import datetime
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+BRAIN_NOTEBOOK_ID = "4e930edb-9f8d-4a41-9987-52a3d1291720"
+BRAIN_NOTEBOOK_URL = f"https://notebook.google.com/notebook/{BRAIN_NOTEBOOK_ID}"
+NLM_WRAPPER = Path("/home/antigravity/.gemini/nlm/nlm_wrapper.py")
+
+EXCLUDED_DIRS = {
+    ".git",
+    "node_modules",
+    ".venv",
+    "venv",
+    "__pycache__",
+    ".next",
+    "dist",
+    "build",
+    ".agents",
+}
+
+CODE_EXTENSIONS = {
+    ".py",
+    ".js",
+    ".ts",
+    ".tsx",
+    ".jsx",
+    ".sh",
+    ".json",
+    ".yaml",
+    ".yml",
+    ".toml",
+    ".md",
+    ".html",
+    ".css",
+}
+
+
+def run_nlm(args: list[str]) -> str:
+    cmd = [sys.executable, str(NLM_WRAPPER), "cli", *args]
+    res = subprocess.run(cmd, capture_output=True, text=True)
+    if res.returncode != 0:
+        raise RuntimeError(
+            f"Erro ao executar nlm {' '.join(args)}:\n{res.stderr or res.stdout}"
+        )
+    return res.stdout.strip()
+
+
+def list_sources(notebook_id: str) -> list[dict]:
+    out = run_nlm(["source", "list", notebook_id, "--json"])
+    if not out:
+        return []
+    data = json.loads(out)
+    if isinstance(data, dict) and "sources" in data:
+        return data["sources"]
+    if isinstance(data, list):
+        return data
+    return []
+
+
+def upsert_text_source(notebook_id: str, title: str, content: str) -> dict:
+    """Adiciona ou atualiza uma fonte de texto no caderno (evitando duplicatas)."""
+    existing_sources = list_sources(notebook_id)
+    matching_ids = [
+        s.get("id") or s.get("source_id")
+        for s in existing_sources
+        if (s.get("title") or "").strip().lower() == title.strip().lower()
+    ]
+
+    out = run_nlm(
+        [
+            "source",
+            "add",
+            notebook_id,
+            "--text",
+            content,
+            "--title",
+            title,
+            "--json",
+        ]
+    )
+
+    for old_id in matching_ids:
+        if old_id:
+            try:
+                run_nlm(["source", "delete", str(old_id), "--confirm"])
+            except Exception:
+                pass
+
+    try:
+        return json.loads(out)
+    except Exception:
+        return {"raw": out, "title": title}
+
+
+def extract_python_symbols(file_path: Path) -> list[str]:
+    symbols: list[str] = []
+    try:
+        tree = ast.parse(file_path.read_text(encoding="utf-8", errors="replace"))
+        for node in tree.body:
+            if isinstance(node, ast.ClassDef):
+                doc = ast.get_docstring(node) or ""
+                first_line = doc.splitlines()[0] if doc else ""
+                symbols.append(f"- **Classe `{node.name}`**: {first_line}")
+            elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                doc = ast.get_docstring(node) or ""
+                first_line = doc.splitlines()[0] if doc else ""
+                symbols.append(f"- **Função `{node.name}()`**: {first_line}")
+    except Exception:
+        pass
+    return symbols
+
+
+def build_code_documentation(target_dir: Path, project_name: str | None = None) -> tuple[str, str]:
+    proj = project_name or target_dir.name
+    doc_title = f"💻 Documentação de Código — {proj}"
+    now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+
+    lines = [
+        f"# {doc_title}",
+        "",
+        "Documentação técnica e estrutural gerada automaticamente pelo Antigravity para o Segundo Cérebro no NotebookLM.",
+        "",
+        f"- **Projeto:** `{proj}`",
+        f"- **Caminho:** `{target_dir}`",
+        f"- **Atualizado em:** {now_str}",
+        "",
+        "## 1. Árvore de Diretórios e Arquivos",
+        "",
+        "```text",
+    ]
+
+    code_files: list[Path] = []
+    for root, dirs, files in os.walk(target_dir):
+        dirs[:] = sorted(d for d in dirs if d not in EXCLUDED_DIRS)
+        rel_root = Path(root).relative_to(target_dir)
+        depth = 0 if str(rel_root) == "." else len(rel_root.parts)
+        indent = "  " * depth
+        if str(rel_root) != ".":
+            lines.append(f"{indent}{rel_root.name}/")
+        for f in sorted(files):
+            fp = Path(root) / f
+            lines.append(f"{indent}  {f}")
+            if fp.suffix.lower() in CODE_EXTENSIONS and fp.stat().st_size < 80_000:
+                code_files.append(fp)
+
+    lines.append("```")
+    lines.append("")
+    lines.append("## 2. Mapa de Módulos, Funções e Classes")
+    lines.append("")
+
+    has_symbols = False
+    for fp in code_files:
+        if fp.suffix.lower() == ".py":
+            syms = extract_python_symbols(fp)
+            if syms:
+                has_symbols = True
+                rel = fp.relative_to(target_dir)
+                lines.append(f"### `{rel}`")
+                lines.extend(syms)
+                lines.append("")
+    if not has_symbols:
+        lines.append("*(Nenhum símbolo Python extraído ou projeto baseado em outros formatos)*")
+        lines.append("")
+
+    lines.append("## 3. Código-Fonte e Documentação dos Arquivos")
+    lines.append("")
+
+    for fp in code_files:
+        rel = fp.relative_to(target_dir)
+        ext = fp.suffix.lstrip(".") or "text"
+        content = fp.read_text(encoding="utf-8", errors="replace")
+        lines.append(f"### Arquivo: `{rel}`")
+        lines.append("")
+        lines.append(f"```{ext}")
+        lines.append(content.rstrip())
+        lines.append("```")
+        lines.append("")
+
+    return doc_title, "\n".join(lines)
+
+
+def cmd_sync_chat(args: argparse.Namespace) -> None:
+    if args.file:
+        content = Path(args.file).read_text(encoding="utf-8")
+    elif args.text:
+        content = args.text
+    else:
+        raise ValueError("Informe --file ou --text com o resumo/histórico da conversa.")
+
+    full_title = (
+        args.title
+        if args.title.startswith("💬")
+        else f"💬 Chat & Decisões — {args.title}"
+    )
+    print(f"🧠 Sincronizando conversa '{full_title}' para o Segundo Cérebro...")
+    upsert_text_source(args.notebook, full_title, content)
+    print("✅ Conversa sincronizada com sucesso!")
+    print(f"🔗 Caderno: {BRAIN_NOTEBOOK_URL}")
+
+
+def cmd_sync_code(args: argparse.Namespace) -> None:
+    target_dir = Path(args.dir).resolve()
+    if not target_dir.exists():
+        raise FileNotFoundError(f"Diretório não encontrado: {target_dir}")
+    doc_title, md_content = build_code_documentation(target_dir, project_name=args.project)
+    print(f"💻 Sincronizando documentação de código '{doc_title}' para o Segundo Cérebro...")
+    upsert_text_source(args.notebook, doc_title, md_content)
+    print("✅ Documentação de código sincronizada com sucesso!")
+    print(f"🔗 Caderno: {BRAIN_NOTEBOOK_URL}")
+
+
+def cmd_save_doc(args: argparse.Namespace) -> None:
+    if args.file:
+        content = Path(args.file).read_text(encoding="utf-8")
+    elif args.text:
+        content = args.text
+    else:
+        raise ValueError("Informe --file ou --text")
+
+    prefix_map = {
+        "aprendizado": "📘 Aprendizado — ",
+        "codigo": "💻 Código — ",
+        "arquitetura": "🏗️ Arquitetura — ",
+        "chat": "💬 Chat & Decisões — ",
+    }
+    prefix = prefix_map.get(args.category.lower(), "📘 Nota — ")
+    full_title = args.title if args.title.startswith(("📘", "💻", "🏗️", "💬")) else f"{prefix}{args.title}"
+
+    print(f"📝 Salvando '{full_title}' no Segundo Cérebro...")
+    upsert_text_source(args.notebook, full_title, content)
+    print("✅ Documento salvo e indexado no NotebookLM!")
+    print(f"🔗 Caderno: {BRAIN_NOTEBOOK_URL}")
+
+
+def cmd_status(args: argparse.Namespace) -> None:
+    print("=" * 72)
+    print("🧠 SEGUNDO CÉREBRO — ENGENHARIA & APRENDIZADO (NOTEBOOKLM)")
+    print(f"🔗 Link: {BRAIN_NOTEBOOK_URL}")
+    print("=" * 72)
+    out = run_nlm(["source", "list", args.notebook])
+    print(out)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Automação do Segundo Cérebro de Engenharia & Aprendizado (Antigravity -> NotebookLM)"
+    )
+    parser.add_argument(
+        "--notebook",
+        default=BRAIN_NOTEBOOK_ID,
+        help="ID ou alias do caderno no NotebookLM (padrão: cerebro)",
+    )
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    p_chat = sub.add_parser("sync-chat", help="Sincroniza o histórico/resumo da conversa para o Segundo Cérebro")
+    p_chat.add_argument("--title", required=True, help="Título ou tema da conversa")
+    p_chat.add_argument("--file", help="Caminho para arquivo Markdown com o registro da conversa")
+    p_chat.add_argument("--text", help="Conteúdo em texto direto")
+
+    p_code = sub.add_parser("sync-code", help="Gera e sincroniza a documentação de código de um projeto")
+    p_code.add_argument("--dir", default=str(Path.cwd()), help="Diretório do projeto/repositório")
+    p_code.add_argument("--project", help="Nome do projeto")
+
+    p_doc = sub.add_parser("save-doc", help="Salva uma documentação de aprendizado ou nota estruturada")
+    p_doc.add_argument("--title", required=True, help="Título do documento")
+    p_doc.add_argument("--category", default="aprendizado", choices=["aprendizado", "codigo", "arquitetura", "chat"])
+    p_doc.add_argument("--file", help="Caminho para arquivo Markdown/texto")
+    p_doc.add_argument("--text", help="Conteúdo em texto direto")
+
+    sub.add_parser("status", help="Lista todas as fontes do Segundo Cérebro")
+
+    args = parser.parse_args()
+    if args.command == "sync-chat":
+        cmd_sync_chat(args)
+    elif args.command == "sync-code":
+        cmd_sync_code(args)
+    elif args.command == "save-doc":
+        cmd_save_doc(args)
+    elif args.command == "status":
+        cmd_status(args)
+
+
+if __name__ == "__main__":
+    main()

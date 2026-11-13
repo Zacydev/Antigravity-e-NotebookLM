@@ -1,61 +1,76 @@
-# Antigravity + NotebookLM (via MCP & CLI `nlm`)
+# 🧠 Antigravity + NotebookLM — Segundo Cérebro de Engenharia & Aprendizado (via MCP & CLI `nlm`)
 
-Integração direta entre o **Google Antigravity** e o **Google NotebookLM (Gemini Notebook)** utilizando o servidor **MCP (`gemini-notebook-mcp`)** e a CLI **`nlm`** (`notebooklm-mcp-cli`).
+Integração direta e automatizada entre o **Google Antigravity** e o **Google NotebookLM (Gemini Notebook)** utilizando o servidor **MCP (`gemini-notebook-mcp`)**, a CLI **`nlm`** (`notebooklm-mcp-cli`) e o motor de automação **`brain_sync.py`**.
 
----
-
-## 🚀 O que já está instalado e configurado no seu ambiente
-
-1. **Pacote Oficial (`notebooklm-mcp-cli` v0.16.2)**:
-   - Fornece o servidor MCP **`gemini-notebook-mcp`** (com 55 ferramentas para criar cadernos, adicionar fontes, fazer perguntas ao chat do caderno, gerar podcasts/áudios, vídeos, slides, mapas mentais e relatórios) e a CLI **`nlm`**.
-2. **Wrapper Persistente (`/home/antigravity/.gemini/nlm/nlm_wrapper.py`)**:
-   - Garante que o servidor MCP e suas credenciais salvas em `/home/antigravity/.gemini/nlm/storage` persistam entre todas as suas conversas do Antigravity.
-3. **Configuração Global do Servidor MCP**:
-   - Configurada em `~/.gemini/antigravity/mcp_config.json`, `~/.gemini/config/mcp_config.json` e [`.agents/mcp_config.json`](./.agents/mcp_config.json).
-4. **Skill Oficial (`nlm-skill`)**:
-   - Instalada globalmente no Antigravity e versionada em [`.agents/skills/nlm-skill/SKILL.md`](./.agents/skills/nlm-skill/SKILL.md).
+🔗 **Caderno Central no NotebookLM:** [`🧠 Segundo Cérebro — Engenharia & Aprendizado (Antigravity)`](https://notebook.google.com/notebook/4e930edb-9f8d-4a41-9987-52a3d1291720)
+- **Notebook ID:** `4e930edb-9f8d-4a41-9987-52a3d1291720`
+- **Alias configurado:** `cerebro`
+- **Modo de IA do Caderno:** `learning_guide` (Guia de Aprendizado com respostas detalhadas)
 
 ---
 
-## 🔐 Último Passo Obrigatório: Autenticar sua Conta do NotebookLM
+## ⚙️ Arquitetura da Solução
 
-Como o NotebookLM exige uma sessão autenticada da sua conta Google:
+1. **Wrapper Persistente ([`scripts/nlm_wrapper.py`](./scripts/nlm_wrapper.py) / `/home/antigravity/.gemini/nlm/nlm_wrapper.py`)**:
+   - Auto-instala o pacote oficial `notebooklm-mcp-cli` (v0.16.2) caso a VM em nuvem do Antigravity seja recriada.
+   - Sincroniza automaticamente os cookies e perfis de autenticação entre o armazenamento persistente (`/home/antigravity/.gemini/nlm/storage`) e o diretório local de execução (`~/.notebooklm-mcp-cli`), contornando restrições de `chmod` do sistema de arquivos FUSE.
+   - Sanitiza a variável `NO_PROXY` (removendo `[::1]`) para evitar falhas de parser no `httpx`.
+2. **Motor de Automação do Segundo Cérebro ([`scripts/brain_sync.py`](./scripts/brain_sync.py) / `/home/antigravity/.gemini/nlm/brain_sync.py`)**:
+   - Conecta qualquer conversa e projeto do Antigravity ao caderno central no NotebookLM sem duplicar fontes (substitui automaticamente versões anteriores da mesma fonte ao atualizar).
+   - Possui 3 pilares de sincronização:
+     - **`💬 Chat & Decisões` (`sync-chat`)**: Registra o histórico da conversa, decisões arquiteturais, problemas encontrados e soluções aplicadas.
+     - **`💻 Documentação de Código` (`sync-code`)**: Escaneia automaticamente o diretório do projeto, gera a árvore de arquivos, extrai assinaturas de classes/funções (`class`, `def`), docstrings e consolida o código-fonte comentado.
+     - **`📘 Aprendizado` (`sync-learning`)**: Cria guias de estudo estruturados explicando os conceitos de engenharia de software aplicados na sessão.
+3. **Skill Global ([`.agents/skills/nlm-skill/SKILL.md`](./.agents/skills/nlm-skill/SKILL.md))**:
+   - Registrada internamente no Antigravity (`save_skill`) e versionada neste repositório, permitindo que **qualquer nova conversa** reconheça imediatamente os comandos do Segundo Cérebro e do servidor MCP.
 
-### Opção A — Se você estiver usando o Antigravity Web (neste chat em nuvem)
-1. Abra o [NotebookLM](https://notebooklm.google.com/) no navegador do seu computador (já logado na sua conta Google).
-2. Pressione **F12** (ou clique com o botão direito $\rightarrow$ **Inspecionar**) e vá na aba **Rede (Network)**.
-3. Recarregue a página (`F5`), clique na primeira requisição para `notebooklm.google.com` (ou `notebook.google.com` / `batchexecute`), clique com o botão direito nela e escolha **Copiar $\rightarrow$ Copiar como cURL (Copy as cURL)** *(ou copie o valor do cabeçalho `Cookie:`)*.
-4. Cole aqui no chat (ou envie em um arquivo `cookies.txt`) para o agente executar:
-   ```bash
-   python3 /home/antigravity/.gemini/nlm/nlm_wrapper.py cli login --manual --file cookies.txt --storage file
-   ```
-   Suas credenciais serão validadas e salvas de forma persistente em `/home/antigravity/.gemini/nlm/storage` para todas as conversas!
+---
 
-### Opção B — Se você estiver usando o Antigravity IDE / CLI instalado no seu computador
-No terminal do seu computador, basta rodar:
+## 🚀 Como Usar em Qualquer Conversa do Antigravity
+
+Em qualquer **nova conversa** do Antigravity, basta pedir em linguagem natural:
+
+- *"Sincronize esta conversa e a documentação de código do projeto com o meu Segundo Cérebro no NotebookLM."*
+- *"Gere uma documentação de aprendizado no meu NotebookLM sobre o que construímos hoje."*
+- *"Crie um podcast (Audio Overview) ou um quiz no meu Segundo Cérebro do NotebookLM sobre a arquitetura deste projeto."*
+
+### Comandos Diretos da Automação (`brain_sync.py`)
+
 ```bash
-uv tool install notebooklm-mcp-cli
-nlm login
-nlm setup add antigravity
-nlm skill install antigravity
+# 1. Verificar o status e listar todas as fontes do Segundo Cérebro
+python3 /home/antigravity/.gemini/nlm/brain_sync.py status
+
+# 2. Sincronizar o resumo/decisões de um chat
+python3 /home/antigravity/.gemini/nlm/brain_sync.py sync-chat \
+  --title "Nome da Feature ou Sessão" \
+  --file /tmp/resumo_chat.md
+
+# 3. Gerar e sincronizar documentação completa de código de um repositório
+python3 /home/antigravity/.gemini/nlm/brain_sync.py sync-code \
+  --dir /home/antigravity/Zacydev/Antigravity-e-NotebookLM \
+  --project "Antigravity-e-NotebookLM"
+
+# 4. Publicar ou atualizar um Guia de Aprendizado
+python3 /home/antigravity/.gemini/nlm/brain_sync.py sync-learning \
+  --topic "Tema de Estudo" \
+  --file /tmp/guia_aprendizado.md
 ```
-O comando `nlm login` abrirá o seu navegador automaticamente para capturar a sessão.
 
 ---
 
-## 🛠️ Comandos Principais
+## 🛠️ Comandos da CLI Oficial (`nlm`)
 
 ```bash
-# Verificar status do login e listar seus cadernos do NotebookLM
+# Verificar se a sessão Google continua válida
 python3 /home/antigravity/.gemini/nlm/nlm_wrapper.py cli login --check
+
+# Listar todos os cadernos da conta
 python3 /home/antigravity/.gemini/nlm/nlm_wrapper.py cli notebook list
 
-# Criar um caderno novo
-python3 /home/antigravity/.gemini/nlm/nlm_wrapper.py cli notebook create "Meu Projeto"
+# Fazer uma pergunta diretamente ao Segundo Cérebro (usando o alias 'cerebro')
+python3 /home/antigravity/.gemini/nlm/nlm_wrapper.py cli notebook query cerebro "Faça um resumo das decisões técnicas e da arquitetura deste projeto"
 
-# Adicionar uma fonte (texto, URL, YouTube ou Google Drive)
-python3 /home/antigravity/.gemini/nlm/nlm_wrapper.py cli source add <NOTEBOOK_ID> --text "Conteúdo..." --title "Título da Fonte"
-
-# Fazer uma pergunta diretamente ao caderno
-python3 /home/antigravity/.gemini/nlm/nlm_wrapper.py cli notebook query <NOTEBOOK_ID> "Quais são os pontos principais?"
+# Gerar um Podcast (Audio Overview) ou Quiz a partir das fontes do Segundo Cérebro
+python3 /home/antigravity/.gemini/nlm/nlm_wrapper.py cli audio create cerebro --confirm
+python3 /home/antigravity/.gemini/nlm/nlm_wrapper.py cli quiz create cerebro --confirm
 ```
