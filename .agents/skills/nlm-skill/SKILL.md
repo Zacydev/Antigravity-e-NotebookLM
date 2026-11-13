@@ -11,7 +11,7 @@ description: 'Base de Conhecimento Inteligente & Segundo Cérebro de Engenharia 
 
 ## 🚀 Os 4 Pilares da Base de Conhecimento Inteligente (`brain_sync.py`) — LEIA PRIMEIRO!
 
-O usuário possui um caderno central no NotebookLM chamado **`🧠 Segundo Cérebro — Engenharia & Aprendizado (Antigravity)`**:
+O usuário possui um caderno central no NotebookLM chamado **`Conectar Antigravity com NotebookLM via MCP`**:
 - **Notebook ID:** `4e930edb-9f8d-4a41-9987-52a3d1291720` (Alias: `cerebro`)
 - **URL:** `https://notebook.google.com/notebook/4e930edb-9f8d-4a41-9987-52a3d1291720`
 - **Orquestrador Persistente:** `/home/antigravity/.gemini/nlm/brain_sync.py`

@@ -514,12 +514,12 @@ def cmd_sync_index(args: argparse.Namespace) -> None:
             nb_title = nb.get("title") or "Sem título"
             lines.append(f"- **{nb_title}** — ID: `{nb_id}` (https://notebook.google.com/notebook/{nb_id})")
     else:
-        lines.append(f"- **🧠 Segundo Cérebro — Engenharia & Aprendizado (Antigravity)** — ID: `{BRAIN_NOTEBOOK_ID}`")
+        lines.append(f"- **Conectar Antigravity com NotebookLM via MCP** — ID: `{BRAIN_NOTEBOOK_ID}`")
 
     lines.extend(
         [
             "",
-            "## 2. Fontes Indexadas no Segundo Cérebro Central",
+            "## 2. Fontes Indexadas no Caderno 'Conectar Antigravity com NotebookLM via MCP'",
             "",
         ]
     )

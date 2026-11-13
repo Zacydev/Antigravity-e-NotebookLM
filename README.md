@@ -1,8 +1,8 @@
-# 🧠 Antigravity + NotebookLM — Base de Conhecimento Inteligente v2.0 (`brain_sync.py`)
+# 🧠 Conectar Antigravity com NotebookLM via MCP — Base de Conhecimento Inteligente v2.0 (`brain_sync.py`)
 
-Sistema completo de **Segundo Cérebro de Engenharia & Aprendizado** que conecta o **Google Antigravity** ao **Google NotebookLM (Gemini Notebook)** de forma **bidirecional, auto-catalogada e proativa**.
+Sistema completo de **Base de Conhecimento Inteligente de Engenharia & Aprendizado** que conecta o **Google Antigravity** ao **Google NotebookLM (Gemini Notebook)** de forma **bidirecional, auto-catalogada e proativa**.
 
-🔗 **Caderno Central no NotebookLM:** [`🧠 Segundo Cérebro — Engenharia & Aprendizado (Antigravity)`](https://notebook.google.com/notebook/4e930edb-9f8d-4a41-9987-52a3d1291720)
+🔗 **Caderno Central no NotebookLM:** [`Conectar Antigravity com NotebookLM via MCP`](https://notebook.google.com/notebook/4e930edb-9f8d-4a41-9987-52a3d1291720)
 - **Notebook ID:** `4e930edb-9f8d-4a41-9987-52a3d1291720` (Alias: `cerebro`)
 - **Modo de IA do Caderno:** `learning_guide` (Guia de Aprendizado com respostas detalhadas)
 
