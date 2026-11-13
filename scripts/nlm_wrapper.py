@@ -2,10 +2,11 @@
 """
 Wrapper persistente para o Gemini Notebook MCP & CLI (notebooklm-mcp-cli) no Antigravity.
 
-Resolve automaticamente 3 limitações do ambiente de VMs efêmeras do Antigravity:
-1. Auto-instala `notebooklm-mcp-cli` via `uv tool install` se a VM for nova (enviando logs para stderr para não quebrar o JSON-RPC do MCP).
-2. Sincroniza as credenciais salvas em `/home/antigravity/.gemini/nlm/storage` (persistente entre conversas) com `~/.notebooklm-mcp-cli` (disco local com suporte a chmod 0700/0600).
-3. Permite executar tanto o servidor MCP (`nlm_wrapper.py mcp`) quanto a CLI (`nlm_wrapper.py cli <args>`).
+Resolve automaticamente 4 limitações do ambiente de VMs efêmeras do Antigravity:
+1. Corrige NO_PROXY (`[::1]`) que causa `httpx.InvalidURL: Invalid port: ':1]'`.
+2. Auto-instala `notebooklm-mcp-cli` via `uv tool install` se a VM for nova (enviando logs para stderr para não quebrar o JSON-RPC do MCP).
+3. Sincroniza as credenciais salvas em `/home/antigravity/.gemini/nlm/storage` (persistente entre conversas) com `~/.notebooklm-mcp-cli` (disco local com suporte a chmod 0700/0600).
+4. Permite executar tanto o servidor MCP (`nlm_wrapper.py mcp`) quanto a CLI (`nlm_wrapper.py cli <args>`).
 """
 
 import os
@@ -20,7 +21,15 @@ UV_BIN = Path("/usr/local/bin/uv")
 LOCAL_BIN = Path.home() / ".local" / "bin"
 
 
-def ensure_installed() -> None:
+def sanitize_no_proxy(env: dict[str, str]) -> None:
+    for var in ("NO_PROXY", "no_proxy"):
+        val = env.get(var)
+        if val:
+            parts = [p.strip() for p in val.split(",") if p.strip() != "[::1]"]
+            env[var] = ",".join(parts)
+
+
+def ensure_installed(env: dict[str, str]) -> None:
     nlm_bin = LOCAL_BIN / "nlm"
     mcp_bin = LOCAL_BIN / "notebooklm-mcp"
     if nlm_bin.exists() and mcp_bin.exists():
@@ -29,6 +38,7 @@ def ensure_installed() -> None:
         [str(UV_BIN), "tool", "install", "notebooklm-mcp-cli"],
         stdout=sys.stderr,
         stderr=sys.stderr,
+        env=env,
         check=True,
     )
 
@@ -91,7 +101,9 @@ def sync_to_persistent() -> None:
 
 
 def main() -> int:
-    ensure_installed()
+    env = os.environ.copy()
+    sanitize_no_proxy(env)
+    ensure_installed(env)
     sync_from_persistent()
 
     args = sys.argv[1:]
@@ -100,7 +112,6 @@ def main() -> int:
         mode = args[0]
         args = args[1:]
 
-    env = os.environ.copy()
     env["PATH"] = f"{LOCAL_BIN}:{env.get('PATH', '')}"
     env.setdefault("NLM_AUTH_STORAGE", "file")
     env.setdefault("NOTEBOOKLM_HL", "pt-BR")
