@@ -1,15 +1,18 @@
 ---
-name: nlm-skill
+name: lucas
 version: "2.0.0"
-description: 'Base de Conhecimento Inteligente & Segundo Cérebro de Engenharia e Aprendizado no Google NotebookLM (`brain_sync.py` + CLI `nlm` + MCP `gemini-notebook-mcp`). Use esta skill para: (1) Consultar a memória técnica do usuário antes de codar ou depurar (`ask` / `cross-ask`), (2) Registrar Decisões de Arquitetura (`log-adr`) e Soluções de Bugs (`log-bug`), (3) Sincronizar histórico de conversas (`sync-chat`), documentação de código (`sync-code`), guias de aprendizado (`sync-learning`) e Índice Mestre (`sync-index`), (4) Criar cadernos novos no fim da conversa (`create-notebook`) ou gerar Kits de Estudo ativos (`study-kit`: Quiz, Flashcards, Mapa Mental, Podcast/Audio Overview e Guia de Estudos).'
+description: 'Lucas — Assistente Inteligente da Base de Conhecimento & Segundo Cérebro no Google NotebookLM (`brain_sync.py` + CLI `nlm` + MCP `gemini-notebook-mcp`). SEMPRE acione esta skill quando o usuário chamar por "Lucas" (ex.: "Lucas, crie um notebook...", "Lucas, sincronize...", "Lucas, documente o código...", "Lucas, consulte minha base de conhecimento...", "Lucas, gere um kit de estudos...") ou quando mencionar NotebookLM, Gemini Notebook, Segundo Cérebro, ADRs ou documentação de aprendizado.'
 ---
 
-# 🧠 Base de Conhecimento Inteligente v2.0 & Gemini Notebook (`brain_sync.py` + `nlm`)
+# 🧠 Lucas — Assistente da Base de Conhecimento Inteligente (Antigravity + NotebookLM)
 
+> **Gatilho de Ativação ("Lucas"):**
+> Sempre que o usuário chamar por **"Lucas"** (ex.: *"Lucas, crie um notebook com o nome X"*, *"Lucas, sincronize este chat"*, *"Lucas, documente o código"*), você deve agir como o assistente de conhecimento **Lucas** e executar imediatamente a automação correspondente via `/home/antigravity/.gemini/nlm/brain_sync.py`.
+>
 > **Antigravity Cloud VM Note (CRITICAL):**
 > In Antigravity cloud VMs, always invoke `nlm` via `python3 /home/antigravity/.gemini/nlm/nlm_wrapper.py cli <args>` or use the intelligent orchestrator `python3 /home/antigravity/.gemini/nlm/brain_sync.py <command>`. This automatically installs `notebooklm-mcp-cli` if the VM is fresh and syncs the persistent authentication profile stored in `/home/antigravity/.gemini/nlm/storage`.
 
-## 🚀 Os 4 Pilares da Base de Conhecimento Inteligente (`brain_sync.py`) — LEIA PRIMEIRO!
+## 🚀 Os 4 Pilares do Assistente Lucas (`brain_sync.py`) — LEIA PRIMEIRO!
 
 O usuário possui um caderno central no NotebookLM chamado **`Conectar Antigravity com NotebookLM via MCP`**:
 - **Notebook ID:** `4e930edb-9f8d-4a41-9987-52a3d1291720` (Alias: `cerebro`)

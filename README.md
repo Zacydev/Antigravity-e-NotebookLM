@@ -31,17 +31,20 @@ Com um único comando, aciona o Studio do NotebookLM para criar materiais de fix
 
 ---
 
-## 💬 Como Usar em Qualquer Conversa (Exemplos de Prompts)
+## 💬 Como Chamar a Skill pelo Nome **"Lucas"** (em Qualquer Conversa)
 
+A skill está registrada no Antigravity com o nome **`lucas`** ([`.agents/skills/lucas/SKILL.md`](./.agents/skills/lucas/SKILL.md)). Em qualquer conversa, basta chamar por **"Lucas"**:
+
+- **Criar um Notebook novo no final da conversa:**
+  > *"Lucas, crie um notebook com o nome 'Projeto X' com o resumo deste chat, a documentação do código e um guia de aprendizado."*
+- **Alimentar a Base de Conhecimento Central (`Conectar Antigravity com NotebookLM via MCP`):**
+  > *"Lucas, sincronize esta conversa, o código, o aprendizado e atualize o Índice Mestre na minha Base de Conhecimento."*
 - **Consultar sua base antes de programar:**
-  > *"Consulte minha Base de Conhecimento no NotebookLM sobre quais decisões arquiteturais e soluções de bugs já registramos."*
+  > *"Lucas, consulte minha Base de Conhecimento sobre quais decisões arquiteturais e soluções de bugs já registramos."*
 - **Registrar uma decisão ou bug resolvido:**
-  > *"Registre esta decisão como um ADR e salve a solução deste bug na minha Base de Conhecimento."*
-- **No final da conversa (Alimentar o Segundo Cérebro ou Criar Caderno Novo):**
-  > *"Sincronize esta conversa, o código, o aprendizado e atualize o Índice Mestre no meu Segundo Cérebro."*
-  > ou: *"Crie um novo notebook no NotebookLM exclusivo para este projeto com o chat, código e aprendizado."*
+  > *"Lucas, registre esta decisão como um ADR e salve a solução deste bug na minha Base de Conhecimento."*
 - **Gerar um Kit de Estudos:**
-  > *"Gere um Kit de Estudos (Mapa Mental, Quiz e Flashcards) no meu Segundo Cérebro sobre o que implementamos hoje."*
+  > *"Lucas, gere um Kit de Estudos (Mapa Mental, Quiz e Flashcards) sobre o que implementamos hoje."*
 
 ---
 
