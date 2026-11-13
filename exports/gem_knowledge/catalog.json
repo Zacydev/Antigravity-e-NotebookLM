@@ -1,0 +1,117 @@
+{
+  "updated_at": "2026-11-13 18:58",
+  "central_notebook_id": "4e930edb-9f8d-4a41-9987-52a3d1291720",
+  "entries": [
+    {
+      "title": "🗂️ Índice Mestre — Catálogo da Base de Conhecimento",
+      "category": "indice",
+      "notebook_id": "4e930edb-9f8d-4a41-9987-52a3d1291720",
+      "notebook_url": "https://notebook.google.com/notebook/4e930edb-9f8d-4a41-9987-52a3d1291720",
+      "tags": [
+        "arquitetura",
+        "automacao",
+        "backend",
+        "bugfix",
+        "frontend",
+        "ia",
+        "indice",
+        "javascript",
+        "mcp",
+        "python"
+      ],
+      "summary": "Mapa global de todos os cadernos, fontes, ADRs, bugs resolvidos e tags da Base de Conhecimento.",
+      "updated_at": "2026-11-13 18:58"
+    },
+    {
+      "title": "💻 Documentação de Código — Rotinas & Finanças",
+      "category": "codigo",
+      "notebook_id": "c8287e6e-1f69-42cf-89b2-576c18b594c4",
+      "notebook_url": "https://notebook.google.com/notebook/c8287e6e-1f69-42cf-89b2-576c18b594c4",
+      "tags": [
+        "arquitetura",
+        "automacao",
+        "backend",
+        "bugfix",
+        "codigo",
+        "frontend",
+        "ia",
+        "javascript",
+        "python"
+      ],
+      "summary": "Documentação completa de código e AST do projeto Rotinas & Finanças",
+      "updated_at": "2026-11-13 18:57"
+    },
+    {
+      "title": "💬 Chat & Decisões — Rotinas e Finanças - Dashboard Pessoal",
+      "category": "chat",
+      "notebook_id": "c8287e6e-1f69-42cf-89b2-576c18b594c4",
+      "notebook_url": "https://notebook.google.com/notebook/c8287e6e-1f69-42cf-89b2-576c18b594c4",
+      "tags": [
+        "arquitetura",
+        "automacao",
+        "chat",
+        "frontend",
+        "ia",
+        "javascript",
+        "python"
+      ],
+      "summary": "# Resumo do Projeto: Rotinas & Finanças Pessoais",
+      "updated_at": "2026-11-13 18:56"
+    },
+    {
+      "title": "💻 Documentação de Código — Antigravity-e-NotebookLM",
+      "category": "codigo",
+      "notebook_id": "4e930edb-9f8d-4a41-9987-52a3d1291720",
+      "notebook_url": "https://notebook.google.com/notebook/4e930edb-9f8d-4a41-9987-52a3d1291720",
+      "tags": [
+        "arquitetura",
+        "automacao",
+        "backend",
+        "bugfix",
+        "codigo",
+        "frontend",
+        "ia",
+        "javascript",
+        "mcp",
+        "python"
+      ],
+      "summary": "Documentação completa de código e AST do projeto Antigravity-e-NotebookLM",
+      "updated_at": "2026-11-13 18:45"
+    },
+    {
+      "title": "🏛️ Memória de Arquitetura — Decisões Técnicas (ADRs)",
+      "category": "arquitetura",
+      "notebook_id": "4e930edb-9f8d-4a41-9987-52a3d1291720",
+      "notebook_url": "https://notebook.google.com/notebook/4e930edb-9f8d-4a41-9987-52a3d1291720",
+      "tags": [
+        "arquitetura",
+        "automacao",
+        "backend",
+        "frontend",
+        "ia",
+        "mcp"
+      ],
+      "summary": "ADR (Antigravity-e-NotebookLM): Arquitetura Híbrida: Skill Global + Subagente Autônomo Lucas -> Combinar a Skill global 'lucas' (.agents/skills/lucas/SKILL.md) com o Subagente Autônomo 'lucas' (.agents/agents/lucas.md via define_subagent e invoke_subagent).",
+      "updated_at": "2026-11-13 18:44"
+    },
+    {
+      "title": "🛠️ Catálogo de Soluções de Bugs & Troubleshooting",
+      "category": "bugfix",
+      "notebook_id": "4e930edb-9f8d-4a41-9987-52a3d1291720",
+      "notebook_url": "https://notebook.google.com/notebook/4e930edb-9f8d-4a41-9987-52a3d1291720",
+      "tags": [
+        "arquitetura",
+        "automacao",
+        "bugfix",
+        "frontend",
+        "ia",
+        "mcp",
+        "python"
+      ],
+      "summary": "Bug (Antigravity-e-NotebookLM): PermissionError chmod em /shared/user/.gemini e InvalidURL [::1] no httpx -> Solução: Criar nlm_wrapper.py que sincroniza credenciais entre ~/.gemini/nlm/storage e ~/.notebooklm-mcp-cli (disco local) e remove [::1] de NO_PROXY antes de invocar o nl",
+      "updated_at": "2026-11-13 18:13"
+    }
+  ],
+  "adrs_count": 0,
+  "bugs_count": 0
+}
