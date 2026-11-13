@@ -1,58 +1,61 @@
-# Antigravity + NotebookLM Bridge
+# Antigravity + NotebookLM (via MCP & CLI `nlm`)
 
-Integração oficial e automatizada entre o **Google Antigravity** e o **Google NotebookLM** utilizando o **Google Drive** e o **Google Docs** como ponte bidirecional de conhecimento.
-
----
-
-## 🔗 Links Rápidos (Google Drive & Docs)
-
-| Recurso | Finalidade | Link Direto |
-| :--- | :--- | :--- |
-| **Pasta Principal** | Raiz da integração no Google Drive | [Antigravity + NotebookLM](https://drive.google.com/drive/folders/1Ci8ZfsexsMavNEvuZkWVnKXauhMeOBVM) |
-| **01_Fontes_para_NotebookLM** | Documentos gerados pelo Antigravity para adicionar como fontes no NotebookLM | [Abrir Pasta de Fontes](https://drive.google.com/drive/folders/1nJFhBGmuqzkFrN-_wFrfoG6dHdsjZQAW) |
-| **02_Exportados_do_NotebookLM** | Notas, briefings e guias exportados do NotebookLM para o Antigravity ler | [Abrir Pasta de Exportados](https://drive.google.com/drive/folders/1qt-hBrfeUZKJq_ZzcU89TJUvt3RIR9XN) |
-| **Hub de Conhecimento (Doc)** | Documento inicial pronto para ser conectado ao seu caderno no NotebookLM | [Hub de Conhecimento — Antigravity & NotebookLM](https://docs.google.com/document/d/1V_Vt_dCFflP9jljx2dO7Ky5-oV47lhWEtYgN4-EW9ZQ/edit) |
+Integração direta entre o **Google Antigravity** e o **Google NotebookLM (Gemini Notebook)** utilizando o servidor **MCP (`gemini-notebook-mcp`)** e a CLI **`nlm`** (`notebooklm-mcp-cli`).
 
 ---
 
-## ⚙️ Como Funciona na Prática
+## 🚀 O que já está instalado e configurado no seu ambiente
 
-### 1. Do Antigravity para o NotebookLM (`push` / `bundle-repo`)
-1. O Antigravity gera documentações, especificações ou pacotes de código do repositório e converte automaticamente para um **Google Doc nativo** dentro da pasta `01_Fontes_para_NotebookLM`.
-2. No [NotebookLM](https://notebooklm.google.com/), você cria um caderno e escolhe **Adicionar fonte $\rightarrow$ Google Drive $\rightarrow$ Documentos** e seleciona o documento da pasta `01_Fontes_para_NotebookLM`.
-3. Quando o Antigravity atualizar o documento (`push`), ele **mantém o mesmo ID do Google Doc** (registrado em `notebooklm_manifest.json`). Assim, dentro do NotebookLM, basta clicar em **Sincronizar com o Google Drive** na fonte!
-
-### 2. Do NotebookLM para o Antigravity (`pull`)
-1. Depois de gerar notas, resumos ou especificações no NotebookLM, exporte-as como **Google Docs** e mova para a pasta `02_Exportados_do_NotebookLM`.
-2. Peça ao Antigravity: *"Leia a nota X da pasta do NotebookLM e implemente o código"* (ou execute `python3 scripts/notebooklm_bridge.py pull "Nome da Nota"`).
+1. **Pacote Oficial (`notebooklm-mcp-cli` v0.16.2)**:
+   - Fornece o servidor MCP **`gemini-notebook-mcp`** (com 55 ferramentas para criar cadernos, adicionar fontes, fazer perguntas ao chat do caderno, gerar podcasts/áudios, vídeos, slides, mapas mentais e relatórios) e a CLI **`nlm`**.
+2. **Wrapper Persistente (`/home/antigravity/.gemini/nlm/nlm_wrapper.py`)**:
+   - Garante que o servidor MCP e suas credenciais salvas em `/home/antigravity/.gemini/nlm/storage` persistam entre todas as suas conversas do Antigravity.
+3. **Configuração Global do Servidor MCP**:
+   - Configurada em `~/.gemini/antigravity/mcp_config.json`, `~/.gemini/config/mcp_config.json` e [`.agents/mcp_config.json`](./.agents/mcp_config.json).
+4. **Skill Oficial (`nlm-skill`)**:
+   - Instalada globalmente no Antigravity e versionada em [`.agents/skills/nlm-skill/SKILL.md`](./.agents/skills/nlm-skill/SKILL.md).
 
 ---
 
-## 🛠️ Uso pelo Terminal (CLI)
+## 🔐 Último Passo Obrigatório: Autenticar sua Conta do NotebookLM
 
-O script [`scripts/notebooklm_bridge.py`](./scripts/notebooklm_bridge.py) automatiza todas as operações:
+Como o NotebookLM exige uma sessão autenticada da sua conta Google:
+
+### Opção A — Se você estiver usando o Antigravity Web (neste chat em nuvem)
+1. Abra o [NotebookLM](https://notebooklm.google.com/) no navegador do seu computador (já logado na sua conta Google).
+2. Pressione **F12** (ou clique com o botão direito $\rightarrow$ **Inspecionar**) e vá na aba **Rede (Network)**.
+3. Recarregue a página (`F5`), clique na primeira requisição para `notebooklm.google.com` (ou `notebook.google.com` / `batchexecute`), clique com o botão direito nela e escolha **Copiar $\rightarrow$ Copiar como cURL (Copy as cURL)** *(ou copie o valor do cabeçalho `Cookie:`)*.
+4. Cole aqui no chat (ou envie em um arquivo `cookies.txt`) para o agente executar:
+   ```bash
+   python3 /home/antigravity/.gemini/nlm/nlm_wrapper.py cli login --manual --file cookies.txt --storage file
+   ```
+   Suas credenciais serão validadas e salvas de forma persistente em `/home/antigravity/.gemini/nlm/storage` para todas as conversas!
+
+### Opção B — Se você estiver usando o Antigravity IDE / CLI instalado no seu computador
+No terminal do seu computador, basta rodar:
+```bash
+uv tool install notebooklm-mcp-cli
+nlm login
+nlm setup add antigravity
+nlm skill install antigravity
+```
+O comando `nlm login` abrirá o seu navegador automaticamente para capturar a sessão.
+
+---
+
+## 🛠️ Comandos Principais
 
 ```bash
-# 1. Ver o status e listar todos os documentos nas pastas do Drive
-python3 scripts/notebooklm_bridge.py status
+# Verificar status do login e listar seus cadernos do NotebookLM
+python3 /home/antigravity/.gemini/nlm/nlm_wrapper.py cli login --check
+python3 /home/antigravity/.gemini/nlm/nlm_wrapper.py cli notebook list
 
-# 2. Enviar ou atualizar um arquivo Markdown local como Google Doc no Drive
-python3 scripts/notebooklm_bridge.py push README.md --title "Documentação Antigravity e NotebookLM"
+# Criar um caderno novo
+python3 /home/antigravity/.gemini/nlm/nlm_wrapper.py cli notebook create "Meu Projeto"
 
-# 3. Empacotar toda a estrutura e arquivos de um repositório para o NotebookLM
-python3 scripts/notebooklm_bridge.py bundle-repo --dir . --title "Fonte NotebookLM — Repositório Antigravity-e-NotebookLM"
+# Adicionar uma fonte (texto, URL, YouTube ou Google Drive)
+python3 /home/antigravity/.gemini/nlm/nlm_wrapper.py cli source add <NOTEBOOK_ID> --text "Conteúdo..." --title "Título da Fonte"
 
-# 4. Baixar um Google Doc exportado do NotebookLM para a pasta local notes/
-python3 scripts/notebooklm_bridge.py pull "Hub de Conhecimento"
+# Fazer uma pergunta diretamente ao caderno
+python3 /home/antigravity/.gemini/nlm/nlm_wrapper.py cli notebook query <NOTEBOOK_ID> "Quais são os pontos principais?"
 ```
-
----
-
-## 💬 Uso Direto pelo Chat do Antigravity (Skill Ativa)
-
-A skill **`notebooklm-bridge`** já está instalada no seu ambiente Antigravity (e versionada em [`.agents/skills/notebooklm-bridge/SKILL.md`](./.agents/skills/notebooklm-bridge/SKILL.md)). Você pode pedir diretamente no chat:
-
-- *"Envie um resumo deste repositório para a minha pasta do NotebookLM."*
-- *"Crie um documento de arquitetura sobre [tema] e publique nas fontes do NotebookLM."*
-- *"Quais arquivos estão na minha pasta do NotebookLM agora?"*
-- *"Leia o documento que salvei na pasta de exportados do NotebookLM."*

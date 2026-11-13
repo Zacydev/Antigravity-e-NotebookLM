@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "gemini-notebook-mcp": {
+      "command": "/usr/bin/python3",
+      "args": [
+        "-u",
+        "/home/antigravity/.gemini/nlm/nlm_wrapper.py",
+        "mcp"
+      ],
+      "env": {
+        "NLM_AUTH_STORAGE": "file",
+        "NOTEBOOKLM_HL": "pt-BR"
+      },
+      "timeoutSeconds": 600
+    }
+  }
+}
