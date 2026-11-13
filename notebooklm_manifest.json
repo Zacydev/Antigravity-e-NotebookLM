@@ -1,0 +1,34 @@
+{
+  "drive_folders": {
+    "root": {
+      "name": "Antigravity + NotebookLM",
+      "id": "1Ci8ZfsexsMavNEvuZkWVnKXauhMeOBVM",
+      "url": "https://drive.google.com/drive/folders/1Ci8ZfsexsMavNEvuZkWVnKXauhMeOBVM"
+    },
+    "sources_for_notebooklm": {
+      "name": "01_Fontes_para_NotebookLM",
+      "id": "1nJFhBGmuqzkFrN-_wFrfoG6dHdsjZQAW",
+      "url": "https://drive.google.com/drive/folders/1nJFhBGmuqzkFrN-_wFrfoG6dHdsjZQAW"
+    },
+    "exports_from_notebooklm": {
+      "name": "02_Exportados_do_NotebookLM",
+      "id": "1qt-hBrfeUZKJq_ZzcU89TJUvt3RIR9XN",
+      "url": "https://drive.google.com/drive/folders/1qt-hBrfeUZKJq_ZzcU89TJUvt3RIR9XN"
+    }
+  },
+  "synced_documents": {
+    "hub": {
+      "title": "Hub de Conhecimento — Antigravity & NotebookLM",
+      "doc_id": "1V_Vt_dCFflP9jljx2dO7Ky5-oV47lhWEtYgN4-EW9ZQ",
+      "url": "https://docs.google.com/document/d/1V_Vt_dCFflP9jljx2dO7Ky5-oV47lhWEtYgN4-EW9ZQ/edit",
+      "folder": "sources_for_notebooklm"
+    },
+    "bundle_Antigravity-e-NotebookLM": {
+      "title": "Fonte NotebookLM — Repositório Antigravity-e-NotebookLM",
+      "doc_id": "1MtRkG7CokWacEaO4C7z0OM_pKXMpiU_9rzL2R4YCvDw",
+      "url": "https://docs.google.com/document/d/1MtRkG7CokWacEaO4C7z0OM_pKXMpiU_9rzL2R4YCvDw/edit",
+      "local_path": "/tmp/bundle_Antigravity-e-NotebookLM.md",
+      "folder": "sources_for_notebooklm"
+    }
+  }
+}
