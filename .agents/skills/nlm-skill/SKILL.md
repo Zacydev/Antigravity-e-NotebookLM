@@ -1,40 +1,69 @@
 ---
 name: nlm-skill
-version: "0.16.2"
-description: 'Expert guide for the Gemini Notebook (formerly Google NotebookLM) CLI (`nlm`), MCP server, and the automated "Segundo Cérebro de Engenharia & Aprendizado" (`brain_sync.py`). Use this skill when users want to interact with Gemini Notebook / NotebookLM programmatically, sync chat history/decisions, generate and sync code documentation, create learning/study guides in NotebookLM, or manage notebooks, sources, podcasts, reports, quizzes, flashcards, mind maps, slides, and videos. Triggers on mentions of "nlm", "notebooklm", "Gemini Notebook", "segundo cérebro", "brain_sync", "sincronizar conversa", "documentação de código", "documentação de aprendizado", "plan usage", "quota", "podcast generation", "audio overview", "interactive report", or any NotebookLM automation task.'
+version: "2.0.0"
+description: 'Base de Conhecimento Inteligente & Segundo Cérebro de Engenharia e Aprendizado no Google NotebookLM (`brain_sync.py` + CLI `nlm` + MCP `gemini-notebook-mcp`). Use esta skill para: (1) Consultar a memória técnica do usuário antes de codar ou depurar (`ask` / `cross-ask`), (2) Registrar Decisões de Arquitetura (`log-adr`) e Soluções de Bugs (`log-bug`), (3) Sincronizar histórico de conversas (`sync-chat`), documentação de código (`sync-code`), guias de aprendizado (`sync-learning`) e Índice Mestre (`sync-index`), (4) Criar cadernos novos no fim da conversa (`create-notebook`) ou gerar Kits de Estudo ativos (`study-kit`: Quiz, Flashcards, Mapa Mental, Podcast/Audio Overview e Guia de Estudos).'
 ---
 
-# Gemini Notebook CLI, MCP & Segundo Cérebro (`brain_sync.py`)
+# 🧠 Base de Conhecimento Inteligente v2.0 & Gemini Notebook (`brain_sync.py` + `nlm`)
 
 > **Antigravity Cloud VM Note (CRITICAL):**
-> In Antigravity cloud VMs, always invoke `nlm` via `python3 /home/antigravity/.gemini/nlm/nlm_wrapper.py cli <args>` (for example: `python3 /home/antigravity/.gemini/nlm/nlm_wrapper.py cli notebook list`). This wrapper automatically installs `notebooklm-mcp-cli` if the VM is fresh and syncs the persistent authentication profile stored in `/home/antigravity/.gemini/nlm/storage`.
+> In Antigravity cloud VMs, always invoke `nlm` via `python3 /home/antigravity/.gemini/nlm/nlm_wrapper.py cli <args>` or use the intelligent orchestrator `python3 /home/antigravity/.gemini/nlm/brain_sync.py <command>`. This automatically installs `notebooklm-mcp-cli` if the VM is fresh and syncs the persistent authentication profile stored in `/home/antigravity/.gemini/nlm/storage`.
 
-## 🧠 Automação "Segundo Cérebro" (`brain_sync.py`) — LEIA PRIMEIRO!
+## 🚀 Os 4 Pilares da Base de Conhecimento Inteligente (`brain_sync.py`) — LEIA PRIMEIRO!
 
 O usuário possui um caderno central no NotebookLM chamado **`🧠 Segundo Cérebro — Engenharia & Aprendizado (Antigravity)`**:
 - **Notebook ID:** `4e930edb-9f8d-4a41-9987-52a3d1291720` (Alias: `cerebro`)
 - **URL:** `https://notebook.google.com/notebook/4e930edb-9f8d-4a41-9987-52a3d1291720`
-- **Script Persistente:** `/home/antigravity/.gemini/nlm/brain_sync.py` (também versionado em `scripts/brain_sync.py` no repositório `Zacydev/Antigravity-e-NotebookLM`).
+- **Orquestrador Persistente:** `/home/antigravity/.gemini/nlm/brain_sync.py`
+- **Catálogo Persistente Local:** `/home/antigravity/.gemini/nlm/knowledge/catalog.json`
 
-Sempre que o usuário pedir para **"sincronizar com o Segundo Cérebro"**, **"salvar o chat no NotebookLM"**, **"gerar documentação de código no NotebookLM"** ou **"criar documentação de aprendizado"**, execute o `/home/antigravity/.gemini/nlm/brain_sync.py`:
+### Pilar 1: Consulta Inteligente / Memória Bidirecional (RAG Antes de Codar)
+Sempre que o usuário perguntar sobre decisões passadas, arquitetura de projetos anteriores ou como um erro já foi resolvido:
+- **Consultar o Segundo Cérebro (`ask`):**
+  ```bash
+  python3 /home/antigravity/.gemini/nlm/brain_sync.py ask "Como resolvemos <assunto> ou quais padrões usamos?"
+  ```
+- **Consultar TODOS os cadernos da conta ao mesmo tempo (`cross-ask`):**
+  ```bash
+  python3 /home/antigravity/.gemini/nlm/brain_sync.py cross-ask "Pergunta transversal sobre os projetos"
+  ```
 
-1. **Sincronizar o que foi conversado no chat (`sync-chat`)**:
-   - Escreva um resumo rico e estruturado da conversa atual (contexto, perguntas, decisões técnicas e soluções) em `/tmp/chat_resumo.md` e execute:
+### Pilar 2: Memória de Engenharia (ADRs & Catálogo de Bugs Resolvidos)
+Sempre que uma decisão importante de arquitetura for tomada ou um bug complexo for diagnosticado e corrigido:
+- **Registrar Decisão de Arquitetura (`log-adr`):**
+  ```bash
+  python3 /home/antigravity/.gemini/nlm/brain_sync.py log-adr \
+    --title "Título da Decisão" \
+    --project "Nome do Projeto" \
+    --context "Qual era o problema ou necessidade" \
+    --decision "O que foi escolhido e implementado" \
+    --consequences "Benefícios e trade-offs"
+  ```
+- **Registrar Solução de Bug / Troubleshooting (`log-bug`):**
+  ```bash
+  python3 /home/antigravity/.gemini/nlm/brain_sync.py log-bug \
+    --title "Nome curto do Bug" \
+    --project "Nome do Projeto" \
+    --symptom "Mensagem de erro exata ou comportamento" \
+    --cause "Causa-raiz descoberta" \
+    --solution "Como foi resolvido definitivamente"
+  ```
+
+### Pilar 3: Sincronização Inteligente, Auto-Tagging & Índice Mestre
+1. **Sincronizar o que foi conversado no chat (`sync-chat`):**
    ```bash
    python3 /home/antigravity/.gemini/nlm/brain_sync.py sync-chat --title "<Tema da Conversa>" --file /tmp/chat_resumo.md
    ```
-2. **Gerar e sincronizar documentação de código (`sync-code`)**:
-   - Escaneia automaticamente a árvore do repositório, classes, funções e código-fonte:
+2. **Gerar e sincronizar documentação de código (`sync-code`):**
+   - Extrai automaticamente dependências (`package.json`, `requirements.txt`, `pyproject.toml`, `mcp_config.json`), árvore de arquivos, símbolos AST (`class`, `def`) e código-fonte:
    ```bash
    python3 /home/antigravity/.gemini/nlm/brain_sync.py sync-code --dir <CAMINHO_DO_PROJETO> --project "<Nome do Projeto>"
    ```
-3. **Gerar e sincronizar documentação de aprendizado (`sync-learning`)**:
-   - Crie um guia de estudos / conceitos técnicos aprendidos em `/tmp/aprendizado.md` e execute:
+3. **Gerar e sincronizar documentação de aprendizado (`sync-learning`):**
    ```bash
    python3 /home/antigravity/.gemini/nlm/brain_sync.py sync-learning --topic "<Tema do Aprendizado>" --file /tmp/aprendizado.md
    ```
-4. **Criar um caderno NOVO exclusivo para a conversa/projeto (`create-notebook`)**:
-   - Quando o usuário pedir no final da conversa para **"criar um novo notebook no NotebookLM"** (em vez de adicionar ao caderno central `cerebro`), gere `/tmp/chat_resumo.md` e `/tmp/aprendizado.md` e execute em um único comando:
+4. **Criar um caderno NOVO exclusivo no final da conversa (`create-notebook`):**
    ```bash
    python3 /home/antigravity/.gemini/nlm/brain_sync.py create-notebook \
      --title "<Título do Novo Caderno>" \
@@ -42,10 +71,20 @@ Sempre que o usuário pedir para **"sincronizar com o Segundo Cérebro"**, **"sa
      --code-dir <CAMINHO_DO_PROJETO> \
      --learning-file /tmp/aprendizado.md
    ```
-5. **Verificar todas as fontes do Segundo Cérebro (`status`)**:
+5. **Atualizar o Índice Mestre da Base de Conhecimento (`sync-index`):**
+   - Atualiza a fonte `🗂️ Índice Mestre — Catálogo da Base de Conhecimento` mapeando todos os cadernos, fontes, ADRs, bugs e tags:
    ```bash
-   python3 /home/antigravity/.gemini/nlm/brain_sync.py status
+   python3 /home/antigravity/.gemini/nlm/brain_sync.py sync-index
    ```
+
+### Pilar 4: Gerador Ativo de Estudos no NotebookLM Studio (`study-kit`)
+Quando o usuário pedir para gerar materiais de revisão (Quiz, Flashcards, Mapa Mental, Guia de Estudos ou Podcast em português):
+```bash
+python3 /home/antigravity/.gemini/nlm/brain_sync.py study-kit \
+  --types mindmap,quiz,flashcards \
+  --topic "<Tema específico do estudo>"
+```
+*(Tipos suportados em `--types`: `mindmap`, `quiz`, `flashcards`, `report`, `audio`)*
 
 This skill also provides comprehensive guidance for using Gemini Notebook via both the `nlm` CLI and MCP tools.
 
