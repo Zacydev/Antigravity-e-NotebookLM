@@ -252,10 +252,64 @@ def cmd_save_doc(args: argparse.Namespace) -> None:
     print(f"🔗 Caderno: {BRAIN_NOTEBOOK_URL}")
 
 
+def cmd_create_notebook(args: argparse.Namespace) -> None:
+    title = args.title
+    print(f"📓 Criando novo caderno no NotebookLM: '{title}'...")
+    out = run_nlm(["notebook", "create", title, "--json"])
+    nb_id = None
+    try:
+        data = json.loads(out)
+        nb_id = data.get("id") or data.get("notebook_id")
+    except Exception:
+        pass
+    if not nb_id:
+        out_quiet = run_nlm(["notebook", "create", title, "--quiet"])
+        nb_id = out_quiet.strip().splitlines()[-1].strip()
+
+    nb_url = f"https://notebook.google.com/notebook/{nb_id}"
+    print(f"✅ Caderno criado! ID: {nb_id}")
+    print(f"🔗 Link: {nb_url}")
+
+    try:
+        run_nlm(["chat", "configure", nb_id, "--goal", "learning_guide"])
+        run_nlm(["chat", "configure", nb_id, "--response-length", "longer"])
+    except Exception:
+        pass
+
+    if args.alias:
+        try:
+            run_nlm(["alias", "set", args.alias, nb_id])
+        except Exception:
+            pass
+
+    if args.chat_file:
+        chat_content = Path(args.chat_file).read_text(encoding="utf-8")
+        upsert_text_source(nb_id, f"💬 Chat & Decisões — {title}", chat_content)
+        print("  ✓ Fonte de Chat & Decisões adicionada!")
+
+    if args.code_dir:
+        target_dir = Path(args.code_dir).resolve()
+        doc_title, md_content = build_code_documentation(target_dir, project_name=args.project or title)
+        upsert_text_source(nb_id, doc_title, md_content)
+        print("  ✓ Fonte de Documentação de Código adicionada!")
+
+    if args.learning_file:
+        learn_content = Path(args.learning_file).read_text(encoding="utf-8")
+        upsert_text_source(nb_id, f"📘 Aprendizado — {title}", learn_content)
+        print("  ✓ Fonte de Guia de Aprendizado adicionada!")
+
+    print(f"\n🎉 Novo Notebook pronto: {nb_url}")
+
+
 def cmd_status(args: argparse.Namespace) -> None:
+    nb_url = (
+        BRAIN_NOTEBOOK_URL
+        if args.notebook in (BRAIN_NOTEBOOK_ID, "cerebro")
+        else f"https://notebook.google.com/notebook/{args.notebook}"
+    )
     print("=" * 72)
     print("🧠 SEGUNDO CÉREBRO — ENGENHARIA & APRENDIZADO (NOTEBOOKLM)")
-    print(f"🔗 Link: {BRAIN_NOTEBOOK_URL}")
+    print(f"🔗 Link: {nb_url}")
     print("=" * 72)
     out = run_nlm(["source", "list", args.notebook])
     print(out)
@@ -272,6 +326,17 @@ def main() -> None:
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
+    p_new = sub.add_parser(
+        "create-notebook",
+        help="Cria um caderno NOVO no NotebookLM no final da conversa com chat, código e aprendizado",
+    )
+    p_new.add_argument("--title", required=True, help="Título do novo caderno no NotebookLM")
+    p_new.add_argument("--alias", help="Alias opcional para o novo caderno")
+    p_new.add_argument("--chat-file", help="Arquivo Markdown com o resumo/histórico da conversa")
+    p_new.add_argument("--code-dir", help="Diretório do projeto para gerar documentação de código")
+    p_new.add_argument("--project", help="Nome do projeto para a documentação de código")
+    p_new.add_argument("--learning-file", help="Arquivo Markdown com a documentação de aprendizado")
+
     p_chat = sub.add_parser("sync-chat", help="Sincroniza o histórico/resumo da conversa para o Segundo Cérebro")
     p_chat.add_argument("--title", required=True, help="Título ou tema da conversa")
     p_chat.add_argument("--file", help="Caminho para arquivo Markdown com o registro da conversa")
@@ -287,14 +352,25 @@ def main() -> None:
     p_doc.add_argument("--file", help="Caminho para arquivo Markdown/texto")
     p_doc.add_argument("--text", help="Conteúdo em texto direto")
 
+    p_learn = sub.add_parser("sync-learning", help="Salva um guia de aprendizado no caderno")
+    p_learn.add_argument("--topic", required=True, help="Tema do guia de aprendizado")
+    p_learn.add_argument("--file", help="Caminho para arquivo Markdown/texto")
+    p_learn.add_argument("--text", help="Conteúdo em texto direto")
+
     sub.add_parser("status", help="Lista todas as fontes do Segundo Cérebro")
 
     args = parser.parse_args()
-    if args.command == "sync-chat":
+    if args.command == "create-notebook":
+        cmd_create_notebook(args)
+    elif args.command == "sync-chat":
         cmd_sync_chat(args)
     elif args.command == "sync-code":
         cmd_sync_code(args)
     elif args.command == "save-doc":
+        cmd_save_doc(args)
+    elif args.command == "sync-learning":
+        args.title = args.topic
+        args.category = "aprendizado"
         cmd_save_doc(args)
     elif args.command == "status":
         cmd_status(args)

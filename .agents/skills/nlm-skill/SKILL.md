@@ -33,7 +33,16 @@ Sempre que o usuário pedir para **"sincronizar com o Segundo Cérebro"**, **"sa
    ```bash
    python3 /home/antigravity/.gemini/nlm/brain_sync.py sync-learning --topic "<Tema do Aprendizado>" --file /tmp/aprendizado.md
    ```
-4. **Verificar todas as fontes do Segundo Cérebro (`status`)**:
+4. **Criar um caderno NOVO exclusivo para a conversa/projeto (`create-notebook`)**:
+   - Quando o usuário pedir no final da conversa para **"criar um novo notebook no NotebookLM"** (em vez de adicionar ao caderno central `cerebro`), gere `/tmp/chat_resumo.md` e `/tmp/aprendizado.md` e execute em um único comando:
+   ```bash
+   python3 /home/antigravity/.gemini/nlm/brain_sync.py create-notebook \
+     --title "<Título do Novo Caderno>" \
+     --chat-file /tmp/chat_resumo.md \
+     --code-dir <CAMINHO_DO_PROJETO> \
+     --learning-file /tmp/aprendizado.md
+   ```
+5. **Verificar todas as fontes do Segundo Cérebro (`status`)**:
    ```bash
    python3 /home/antigravity/.gemini/nlm/brain_sync.py status
    ```
