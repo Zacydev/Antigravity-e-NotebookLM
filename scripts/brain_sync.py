@@ -35,8 +35,9 @@ from pathlib import Path
 
 BRAIN_NOTEBOOK_ID = "4e930edb-9f8d-4a41-9987-52a3d1291720"
 BRAIN_NOTEBOOK_URL = f"https://notebook.google.com/notebook/{BRAIN_NOTEBOOK_ID}"
-NLM_WRAPPER = Path("/home/antigravity/.gemini/nlm/nlm_wrapper.py")
-KNOWLEDGE_DIR = Path("/home/antigravity/.gemini/nlm/knowledge")
+GEMINI_HOME = Path.home() / ".gemini"
+NLM_WRAPPER = GEMINI_HOME / "nlm" / "nlm_wrapper.py"
+KNOWLEDGE_DIR = GEMINI_HOME / "nlm" / "knowledge"
 CATALOG_FILE = KNOWLEDGE_DIR / "catalog.json"
 ADRS_FILE = KNOWLEDGE_DIR / "adrs.md"
 BUGS_FILE = KNOWLEDGE_DIR / "bugs.md"

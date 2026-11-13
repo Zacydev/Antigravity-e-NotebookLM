@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Wrapper persistente para o Gemini Notebook MCP & CLI (notebooklm-mcp-cli) no Antigravity.
+Wrapper multiplataforma (Linux Cloud VM & Windows Desktop) para o Gemini Notebook MCP & CLI (notebooklm-mcp-cli) no Antigravity.
 
-Resolve automaticamente 4 limitações do ambiente de VMs efêmeras do Antigravity:
+Resolve automaticamente as particularidades de ambos os ambientes:
 1. Corrige NO_PROXY (`[::1]`) que causa `httpx.InvalidURL: Invalid port: ':1]'`.
-2. Auto-instala `notebooklm-mcp-cli` via `uv tool install` se a VM for nova (enviando logs para stderr para não quebrar o JSON-RPC do MCP).
-3. Sincroniza as credenciais salvas em `/home/antigravity/.gemini/nlm/storage` (persistente entre conversas) com `~/.notebooklm-mcp-cli` (disco local com suporte a chmod 0700/0600).
+2. Auto-instala `notebooklm-mcp-cli` via `uv tool install` ou `pip install` se ainda não estiver instalado.
+3. Sincroniza as credenciais salvas em `~/.gemini/nlm/storage` com `~/.notebooklm-mcp-cli`.
 4. Permite executar tanto o servidor MCP (`nlm_wrapper.py mcp`) quanto a CLI (`nlm_wrapper.py cli <args>`).
 """
 
@@ -15,10 +15,14 @@ import subprocess
 import sys
 from pathlib import Path
 
-PERSISTENT_DIR = Path("/home/antigravity/.gemini/nlm/storage")
+PERSISTENT_DIR = Path.home() / ".gemini" / "nlm" / "storage"
 LOCAL_STORAGE_DIR = Path.home() / ".notebooklm-mcp-cli"
-UV_BIN = Path("/usr/local/bin/uv")
-LOCAL_BIN = Path.home() / ".local" / "bin"
+IS_WINDOWS = os.name == "nt"
+LOCAL_BIN = (
+    Path(os.environ.get("APPDATA", str(Path.home()))) / "Python" / "Scripts"
+    if IS_WINDOWS
+    else Path.home() / ".local" / "bin"
+)
 
 
 def sanitize_no_proxy(env: dict[str, str]) -> None:
@@ -29,18 +33,42 @@ def sanitize_no_proxy(env: dict[str, str]) -> None:
             env[var] = ",".join(parts)
 
 
+def find_executable(name: str) -> str | None:
+    exe_name = f"{name}.exe" if IS_WINDOWS else name
+    candidates = [
+        LOCAL_BIN / exe_name,
+        Path.home() / ".local" / "bin" / exe_name,
+        Path(sys.executable).parent / exe_name,
+        Path(sys.executable).parent / "Scripts" / exe_name,
+    ]
+    for c in candidates:
+        if c.exists():
+            return str(c)
+    return shutil.which(name)
+
+
 def ensure_installed(env: dict[str, str]) -> None:
-    nlm_bin = LOCAL_BIN / "nlm"
-    mcp_bin = LOCAL_BIN / "notebooklm-mcp"
-    if nlm_bin.exists() and mcp_bin.exists():
+    if find_executable("nlm") and find_executable("notebooklm-mcp"):
         return
-    subprocess.run(
-        [str(UV_BIN), "tool", "install", "notebooklm-mcp-cli"],
-        stdout=sys.stderr,
-        stderr=sys.stderr,
-        env=env,
-        check=True,
+    uv_bin = shutil.which("uv") or (
+        "/usr/local/bin/uv" if Path("/usr/local/bin/uv").exists() else None
     )
+    if uv_bin:
+        subprocess.run(
+            [uv_bin, "tool", "install", "notebooklm-mcp-cli"],
+            stdout=sys.stderr,
+            stderr=sys.stderr,
+            env=env,
+            check=False,
+        )
+    if not find_executable("nlm"):
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "--user", "notebooklm-mcp-cli"],
+            stdout=sys.stderr,
+            stderr=sys.stderr,
+            env=env,
+            check=True,
+        )
 
 
 def sync_from_persistent() -> None:
@@ -112,14 +140,16 @@ def main() -> int:
         mode = args[0]
         args = args[1:]
 
-    env["PATH"] = f"{LOCAL_BIN}:{env.get('PATH', '')}"
+    sep = ";" if IS_WINDOWS else ":"
+    env["PATH"] = f"{LOCAL_BIN}{sep}{Path.home() / '.local' / 'bin'}{sep}{env.get('PATH', '')}"
     env.setdefault("NLM_AUTH_STORAGE", "file")
     env.setdefault("NOTEBOOKLM_HL", "pt-BR")
 
-    target_bin = LOCAL_BIN / ("notebooklm-mcp" if mode == "mcp" else "nlm")
+    bin_name = "notebooklm-mcp" if mode == "mcp" else "nlm"
+    target_bin = find_executable(bin_name) or bin_name
     try:
-        proc = subprocess.run([str(target_bin), *args], env=env)
-        return proc.returncode
+        res = subprocess.run([target_bin, *args], env=env)
+        return res.returncode
     finally:
         sync_to_persistent()
 
